@@ -120,6 +120,7 @@ object TestDataSourceImpl : DataSource {
   }
 }
 
+// ICRC: the city NAIROBI is used here.
 open class TestDownloadManagerImpl(
   private val queries: List<String> = listOf("Patient?address-city=NAIROBI"),
 ) : DownloadWorkManager {

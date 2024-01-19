@@ -13,6 +13,8 @@ buildscript {
     classpath(Plugins.navSafeArgsGradlePlugin)
     classpath(Plugins.rulerGradlePlugin)
   }
+
+
 }
 
 allprojects {
