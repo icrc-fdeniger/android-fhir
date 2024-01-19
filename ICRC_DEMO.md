@@ -1,17 +1,20 @@
-# Modification Done
+# Modifications Done
 
-Some small modifications to:
+Some small code modifications have been done to:
 - be able to compile the project ( JDK compatibility issues)
-- use OpenMRS dev3 serveur. See `com.google.android.fhir.demo.FhirApplication.onCreate`. the default password has been hardcoded as it's  publicly available.
+- use OpenMRS dev3 server. See `com.google.android.fhir.demo.FhirApplication.onCreate`. the default password has been hardcoded as it's publicly available on OpenMRS Community Doc.
 
 
-# How to test it
-By default, only patient City address `NAIROBI` will be displayed. Hardcoded in the demo in  `com.google.android.fhir.testing.TestDownloadManagerImpl`
+# How to start the application
 
-
-Start demo with your preferred IDE ( Intellij, Android Studio)
+Start demo with your preferred IDE ( Intellij, Android Studio). No issue there ( as  compilation issues have been solved).
 
 # Demo
+
+## Nairobi
+By default, only patients with a City address `NAIROBI` will be displayed. 
+It's hardcoded in the official demo in code `com.google.android.fhir.testing.TestDownloadManagerImpl`
+
 
 ## Add user on OpenMRS
 
