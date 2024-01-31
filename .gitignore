@@ -81,3 +81,5 @@ lint/tmp/
 
 # Mac OS
 .DS_Store
+/engine/gradle.properties
+/engine/openmrs.properties

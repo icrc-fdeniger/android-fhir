@@ -153,6 +153,9 @@ dependencies {
   testImplementation(Dependencies.mockWebServer)
   testImplementation(Dependencies.robolectric)
   testImplementation(Dependencies.truth)
+  testImplementation("org.slf4j:slf4j-simple:2.0.10")
+  testImplementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
+
 }
 
 tasks.dokkaHtml.configure {
