@@ -3,9 +3,10 @@ package org.icrc.fhir.demo
 import com.google.android.fhir.sync.DownloadWorkManager
 import com.google.android.fhir.sync.download.DownloadRequest
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.hl7.fhir.r4.model.*
-import java.util.LinkedList
-import java.util.Date
+import org.hl7.fhir.r4.model.Bundle
+import org.hl7.fhir.r4.model.Resource
+import org.hl7.fhir.r4.model.ResourceType
+import java.util.*
 import kotlin.streams.toList
 
 

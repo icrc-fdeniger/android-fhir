@@ -20,6 +20,8 @@ import org.hl7.fhir.r4.model.Resource
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.io.File
 import java.io.FileInputStream
 import java.util.Properties
@@ -30,7 +32,7 @@ import java.util.Properties
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-
+@RunWith(JUnit4::class)
 class OpenMRSAccessTest {
 
     private val logger = KotlinLogging.logger {}
@@ -88,22 +90,24 @@ class OpenMRSAccessTest {
     @Test
     fun test_connection_to_openmrs() {
         val fhirHttpDataSource = FhirHttpDataSource(retrofitHttpService);
-        val downloader = DownloaderImpl(fhirHttpDataSource, ICRCDownloadManagerImpl());
+        val downloadWorkManager = ICRCDownloadManagerImpl()
+        val downloader = DownloaderImpl(fhirHttpDataSource, downloadWorkManager)
         val fhirContext = FhirContext(FhirVersionEnum.R4)
         val jsonParser = JsonParser(fhirContext, ErrorHandlerAdapter())
-        val extractResources = extractResources(downloader)
+        val extractResources = extractResources(downloader,downloadWorkManager.toString())
         extractResources.forEach { r -> System.err.println(jsonParser.encodeToString(r)) }
 
     }
 
     private fun extractResources(
-        downloader: Downloader,
+        downloader: Downloader, url: String
     ): List<Resource> {
         val resources = mutableListOf<Resource>()
         runBlocking {
             downloader.download().collect {
                 when (it) {
                     is DownloadState.Started -> {
+                        logger.debug { "Download started" }
                     }
 
                     is DownloadState.Success -> {
@@ -111,7 +115,7 @@ class OpenMRSAccessTest {
                     }
 
                     is DownloadState.Failure -> {
-                        logger.error { "can't download resource $downloader" }
+                        logger.error { "can't download resource $url" }
                         throw it.syncError.exception
                     }
                 }

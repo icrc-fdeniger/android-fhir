@@ -24,7 +24,7 @@ import org.hl7.fhir.r4.model.OperationOutcome
 import org.hl7.fhir.r4.model.Resource
 
 /** Interface for an abstraction of retrieving FHIR data from a network source. */
-internal interface DataSource {
+interface DataSource {
   /** @return [Bundle] on a successful operation, [OperationOutcome] otherwise. */
   suspend fun download(downloadRequest: DownloadRequest): Resource
 

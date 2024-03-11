@@ -74,6 +74,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
   }
 
   private fun constructFhirEngine(): FhirEngine {
+    FhirEngineProvider.cleanup()
     return FhirEngineProvider.getInstance(this)
   }
 
