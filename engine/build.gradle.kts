@@ -1,14 +1,10 @@
-import Dependencies.forceGuava
-import Dependencies.forceHapiVersion
-import Dependencies.forceJacksonVersion
 import codegen.GenerateSearchParamsTask
 import java.net.URL
 
 plugins {
   id(Plugins.BuildPlugins.androidLib)
   id(Plugins.BuildPlugins.kotlinAndroid)
-  //id(Plugins.BuildPlugins.kotlinKapt)
-  id("com.google.devtools.ksp").version("1.9.21-1.0.16")
+  id(Plugins.BuildPlugins.kotlinKapt)
   id(Plugins.BuildPlugins.mavenPublish)
   jacoco
   id(Plugins.BuildPlugins.dokka).version(Plugins.Versions.dokka)
@@ -88,11 +84,9 @@ configurations {
     exclude(module = "jakarta.activation-api")
     exclude(module = "javax.activation")
     exclude(module = "jakarta.xml.bind-api")
+    exclude(module = "hapi-fhir-caching-caffeine")
+    exclude(group = "com.github.ben-manes.caffeine", module = "caffeine")
     exclude(module = "jcl-over-slf4j")
-
-    forceGuava()
-    forceHapiVersion()
-    forceJacksonVersion()
   }
 }
 
@@ -140,7 +134,7 @@ dependencies {
   implementation(Dependencies.timber)
   implementation(Dependencies.truth)
 
-  ksp(Dependencies.Room.compiler)
+  kapt(Dependencies.Room.compiler)
 
   testImplementation(Dependencies.AndroidxTest.archCore)
   testImplementation(Dependencies.AndroidxTest.core)
@@ -153,9 +147,13 @@ dependencies {
   testImplementation(Dependencies.mockWebServer)
   testImplementation(Dependencies.robolectric)
   testImplementation(Dependencies.truth)
-  testImplementation("org.slf4j:slf4j-simple:2.0.10")
-  testImplementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
 
+  constraints {
+    Dependencies.hapiFhirConstraints().forEach { (libName, constraints) ->
+      api(libName, constraints)
+      implementation(libName, constraints)
+    }
+  }
 }
 
 tasks.dokkaHtml.configure {
