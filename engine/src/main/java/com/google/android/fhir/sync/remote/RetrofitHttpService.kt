@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,20 @@
 
 package com.google.android.fhir.sync.remote
 
-import com.github.fge.jsonpatch.JsonPatch
 import com.google.android.fhir.NetworkConfiguration
-import com.google.android.fhir.sync.HttpAuthenticator
+import com.google.android.fhir.sync.Authenticator
 import java.util.concurrent.TimeUnit
-import okhttp3.Cache
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.hl7.fhir.r4.model.Resource
 import retrofit2.Retrofit
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HeaderMap
-import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Url
 
 /** Retrofit service to make http requests to the FHIR server. */
@@ -41,38 +38,28 @@ internal interface RetrofitHttpService : FhirHttpService {
   @GET
   override suspend fun get(@Url path: String, @HeaderMap headers: Map<String, String>): Resource
 
-  @POST
+  @POST("{path}")
   override suspend fun post(
-    @Url path: String,
+    @Path("path", encoded = true) path: String,
     @Body resource: Resource,
-    @HeaderMap headers: Map<String, String>,
+    @HeaderMap headers: Map<String, String>
   ): Resource
 
-  @PUT
+  @PUT("{path}")
   override suspend fun put(
-    @Url path: String,
+    @Path("path", encoded = true) path: String,
     @Body resource: Resource,
-    @HeaderMap headers: Map<String, String>,
+    @HeaderMap headers: Map<String, String>
   ): Resource
-
-  @PATCH
-  override suspend fun patch(
-    @Url path: String,
-    @Body patchDocument: JsonPatch,
-    @HeaderMap headers: Map<String, String>,
-  ): Resource
-
-  @DELETE
-  override suspend fun delete(@Url path: String, @HeaderMap headers: Map<String, String>): Resource
 
   class Builder(
     private val baseUrl: String,
-    private val networkConfiguration: NetworkConfiguration,
+    private val networkConfiguration: NetworkConfiguration
   ) {
-    private var authenticator: HttpAuthenticator? = null
+    private var authenticator: Authenticator? = null
     private var httpLoggingInterceptor: HttpLoggingInterceptor? = null
 
-    fun setAuthenticator(authenticator: HttpAuthenticator?) = apply {
+    fun setAuthenticator(authenticator: Authenticator?) = apply {
       this.authenticator = authenticator
     }
 
@@ -94,20 +81,17 @@ internal interface RetrofitHttpService : FhirHttpService {
             authenticator?.let {
               addInterceptor(
                 Interceptor { chain: Interceptor.Chain ->
+                  val (authType, accessToken) = it.getAccessToken()
                   val request =
                     chain
                       .request()
                       .newBuilder()
-                      .addHeader(
-                        "Authorization",
-                        it.getAuthenticationMethod().getAuthorizationHeader(),
-                      )
+                      .addHeader("Authorization", "$authType $accessToken")
                       .build()
                   chain.proceed(request)
-                },
+                }
               )
             }
-            networkConfiguration.httpCache?.let { this.cache(Cache(it.cacheDir, it.maxSize)) }
           }
           .build()
       return Retrofit.Builder()

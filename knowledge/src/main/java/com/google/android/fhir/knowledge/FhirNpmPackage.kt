@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package com.google.android.fhir.knowledge
+package com.google.android.fhir.sync
+
+import androidx.annotation.WorkerThread
 
 /**
- * A FHIR NPM Package as defined by the FHIR specification.
- *
- * See https://hl7.org/fhir/packages.html for the published FHIR NPM Packages specification.
- *
- * See https://confluence.hl7.org/display/FHIR/NPM+Package+Specification for more info under the
- * management of FHIR Infrastructure.
+ * [FhirEngine] depends on the developer app to handle user's authentication. The developer
+ * application may provide the implementation during the [FhirEngine] initial setup to obtain
+ * authToken to the engine for successful calls.
  */
-data class FhirNpmPackage(val name: String, val version: String, val canonical: String? = null)
+fun interface Authenticator {
+  /** @return Access token for the engine to make requests on user's behalf. */
+  @WorkerThread fun getAccessToken(): AuthTypeAndCredentials
+}
+
+typealias AuthTypeAndCredentials = Pair<String, String>

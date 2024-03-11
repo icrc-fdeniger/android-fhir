@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.google.android.fhir.demo.data
 
 import com.google.android.fhir.demo.DemoDataStore
 import com.google.android.fhir.sync.DownloadWorkManager
+import com.google.android.fhir.sync.Request
 import com.google.android.fhir.sync.SyncDataParams
-import com.google.android.fhir.sync.download.DownloadRequest
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
@@ -36,9 +36,15 @@ import org.hl7.fhir.r4.model.ResourceType
 class TimestampBasedDownloadWorkManagerImpl(private val dataStore: DemoDataStore) :
   DownloadWorkManager {
   private val resourceTypeList = ResourceType.values().map { it.name }
-  private val urls = LinkedList(listOf("Patient?address-city=NAIROBI&_sort=_lastUpdated"))
+  private val urls =
+    LinkedList(
+      listOf(
+        "Patient?_sort=_lastUpdated",
+        "Observation?_sort=_lastUpdated"
+        )
+    )
 
-  override suspend fun getNextRequest(): DownloadRequest? {
+  override suspend fun getNextRequest(): Request? {
     var url = urls.poll() ?: return null
 
     val resourceTypeToDownload =
@@ -46,7 +52,7 @@ class TimestampBasedDownloadWorkManagerImpl(private val dataStore: DemoDataStore
     dataStore.getLasUpdateTimestamp(resourceTypeToDownload)?.let {
       url = affixLastUpdatedTimestamp(url, it)
     }
-    return DownloadRequest.of(url)
+    return Request.of(url)
   }
 
   override suspend fun getSummaryRequestUrls(): Map<ResourceType, String> {
@@ -98,15 +104,14 @@ class TimestampBasedDownloadWorkManagerImpl(private val dataStore: DemoDataStore
   }
 
   private suspend fun extractAndSaveLastUpdateTimestampToFetchFutureUpdates(
-    resources: List<Resource>,
+    resources: List<Resource>
   ) {
     resources
       .groupBy { it.resourceType }
-      .entries
-      .map { map ->
+      .entries.map { map ->
         dataStore.saveLastUpdatedTimestamp(
           map.key,
-          map.value.maxOfOrNull { it.meta.lastUpdated }?.toTimeZoneString() ?: "",
+          map.value.maxOfOrNull { it.meta.lastUpdated ?: Date() }?.toTimeZoneString() ?: ""
         )
       }
   }
@@ -120,6 +125,7 @@ class TimestampBasedDownloadWorkManagerImpl(private val dataStore: DemoDataStore
  * using the `_lastUpdated` parameter.
  */
 private fun affixLastUpdatedTimestamp(url: String, lastUpdated: String): String {
+  if (lastUpdated.isNullOrEmpty()) return url
   var downloadUrl = url
 
   // Affix lastUpdate to a $everything query using _since as per:

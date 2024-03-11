@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,11 @@ import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.context.FhirVersionEnum
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.datacapture.mapping.ResourceMapper
-import com.google.android.fhir.demo.extensions.readFileFromAssets
 import com.google.android.fhir.get
 import kotlinx.coroutines.launch
 import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.Questionnaire
 import org.hl7.fhir.r4.model.QuestionnaireResponse
-import org.hl7.fhir.r4.model.Resource
 
 /**
  * The ViewModel helper class for [EditPatientFragment], that is responsible for preparing data for
@@ -47,23 +45,20 @@ class EditPatientViewModel(application: Application, private val state: SavedSta
 
   private suspend fun prepareEditPatient(): Pair<String, String> {
     val patient = fhirEngine.get<Patient>(patientId)
-    val launchContexts = mapOf<String, Resource>("client" to patient)
-    val question =
-      getApplication<Application>()
-        .readFileFromAssets("new-patient-registration-paginated.json")
-        .trimIndent()
+    val question = readFileFromAssets("new-patient-registration-paginated.json").trimIndent()
     val parser = FhirContext.forCached(FhirVersionEnum.R4).newJsonParser()
-    val questionnaire = parser.parseResource(Questionnaire::class.java, question) as Questionnaire
+    val questionnaire =
+      parser.parseResource(org.hl7.fhir.r4.model.Questionnaire::class.java, question)
+        as Questionnaire
 
     val questionnaireResponse: QuestionnaireResponse =
-      ResourceMapper.populate(questionnaire, launchContexts)
+      ResourceMapper.populate(questionnaire, patient)
     val questionnaireResponseJson = parser.encodeResourceToString(questionnaireResponse)
     return question to questionnaireResponseJson
   }
 
   private val questionnaire: String
     get() = getQuestionnaireJson()
-
   val isPatientSaved = MutableLiveData<Boolean>()
 
   private val questionnaireResource: Questionnaire
@@ -80,19 +75,52 @@ class EditPatientViewModel(application: Application, private val state: SavedSta
    */
   fun updatePatient(questionnaireResponse: QuestionnaireResponse) {
     viewModelScope.launch {
+      val oldPatient = fhirEngine.get<Patient>(patientId)
       val entry = ResourceMapper.extract(questionnaireResource, questionnaireResponse).entryFirstRep
       if (entry.resource !is Patient) return@launch
       val patient = entry.resource as Patient
-      if (
-        patient.hasName() &&
+      if (patient.hasName() &&
           patient.name[0].hasGiven() &&
           patient.name[0].hasFamily() &&
           patient.hasBirthDate() &&
           patient.hasTelecom() &&
           patient.telecom[0].value != null
       ) {
-        patient.id = patientId
-        fhirEngine.update(patient)
+        oldPatient.birthDate = patient.birthDate
+        // gender
+        oldPatient.gender = patient.gender
+        // active
+        oldPatient.active = patient.active
+
+//         oldPatient.nameFirstRep.apply {
+//        if (family !=  patient.nameFirstRep.family || given.first().value !=  patient.nameFirstRep.given.first().value)
+//             id = UUID.randomUUID().toString()
+//          family = patient.nameFirstRep.family
+//          given.first().value = patient.nameFirstRep.given.first().value
+//          id = UUID.randomUUID().toString()
+//        }
+//        // dob
+//        oldPatient.birthDate = patient.birthDate
+//        // gender
+//        oldPatient.gender = patient.gender
+//        // telecom
+//        oldPatient.telecom.first().apply {
+//          if (value != patient.telecom.first().value)
+//            id = UUID.randomUUID().toString()
+//          value = patient.telecom.first().value
+//
+//        }
+//        // address
+//        oldPatient.address.first().apply {
+//          if (city != patient.address.first().city || country != patient.address.first().country)
+//          id = UUID.randomUUID().toString()
+//          city = patient.address.first().city
+//          country = patient.address.first().country
+//        }
+//
+//        oldPatient.active = patient.active
+
+        fhirEngine.update(oldPatient)
         isPatientSaved.value = true
         return@launch
       }
@@ -101,15 +129,43 @@ class EditPatientViewModel(application: Application, private val state: SavedSta
     }
   }
 
+
+
+  //        // name
+//        oldPatient.nameFirstRep.apply {
+//          family = patient.nameFirstRep.family
+//          given.first().value = patient.nameFirstRep.given.first().value
+//          id = UUID.randomUUID().toString()
+//        }
+//        // dob
+//        oldPatient.birthDate = patient.birthDate
+//        // gender
+//        oldPatient.gender = patient.gender
+//        // telecom
+//        oldPatient.telecom.first().apply {
+//          value = patient.telecom.first().value
+//          id = UUID.randomUUID().toString()
+//        }
+//        // address
+//        oldPatient.address.first().apply {
+//          id = UUID.randomUUID().toString()
+//          city = patient.address.first().city
+//          country = patient.address.first().country
+//        }
+//
+//        oldPatient.active = patient.active
+
   private fun getQuestionnaireJson(): String {
     questionnaireJson?.let {
       return it
     }
-    questionnaireJson =
-      getApplication<Application>()
-        .readFileFromAssets(
-          state[EditPatientFragment.QUESTIONNAIRE_FILE_PATH_KEY]!!,
-        )
+    questionnaireJson = readFileFromAssets(state[EditPatientFragment.QUESTIONNAIRE_FILE_PATH_KEY]!!)
     return questionnaireJson!!
+  }
+
+  private fun readFileFromAssets(filename: String): String {
+    return getApplication<Application>().assets.open(filename).bufferedReader().use {
+      it.readText()
+    }
   }
 }
