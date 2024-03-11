@@ -27,6 +27,8 @@ import com.google.android.fhir.ServerConfiguration
 import com.google.android.fhir.datacapture.DataCaptureConfig
 import com.google.android.fhir.datacapture.XFhirQueryResolver
 import com.google.android.fhir.search.search
+import com.google.android.fhir.sync.HttpAuthenticationMethod
+import com.google.android.fhir.sync.HttpAuthenticator
 import com.google.android.fhir.sync.remote.HttpLogger
 import timber.log.Timber
 
@@ -48,7 +50,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
         enableEncryptionIfSupported = true,
         RECREATE_AT_OPEN,
         ServerConfiguration(
-          "https://hapi.fhir.org/baseR4/",
+          "https://dev3.openmrs.org/openmrs/ws/fhir2/R4/",
           httpLogger =
             HttpLogger(
               HttpLogger.Configuration(
@@ -58,6 +60,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
               Timber.tag("App-HttpLog").d(it)
             },
           networkConfiguration = NetworkConfiguration(uploadWithGzip = false),
+          authenticator = { HttpAuthenticationMethod.Basic(username = "admin", password = "Admin123") }
         ),
       ),
     )
