@@ -11,6 +11,18 @@ Start demo with your preferred IDE ( Intellij, Android Studio). No issue there (
 
 # Demo
 
+## TimestampBasedDownloadWorkManagerImpl
+we changed to
+```kotlin
+private val urls =
+    LinkedList(
+      listOf(
+        "Patient?_sort=_lastUpdated",
+        "Observation?_sort=_lastUpdated"
+        )
+    )
+```
+
 ## Nairobi
 By default, only patients with a City address `NAIROBI` will be displayed. 
 It's hardcoded in the official demo in code `com.google.android.fhir.testing.TestDownloadManagerImpl`

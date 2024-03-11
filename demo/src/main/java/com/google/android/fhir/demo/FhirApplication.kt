@@ -50,7 +50,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
         enableEncryptionIfSupported = true,
         RECREATE_AT_OPEN,
         ServerConfiguration(
-          "https://dev3.openmrs.org/openmrs/ws/fhir2/R4/",
+          "https://ourserver/openmrs/ws/fhir2/R4/",
           httpLogger =
             HttpLogger(
               HttpLogger.Configuration(
@@ -60,8 +60,8 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
               Timber.tag("App-HttpLog").d(it)
             },
           networkConfiguration = NetworkConfiguration(uploadWithGzip = false),
-//                password harccoded as available on https://openmrs.org/demo/
-          authenticator = HttpAuthenticator { HttpAuthenticationMethod.Basic(username = "admin", password = "Admin123") }
+//                password hardcoded as available on https://openmrs.org/demo/
+          authenticator = { HttpAuthenticationMethod.Basic(username = "USERNAME", password = "MAIL") }
         ),
       ),
     )
